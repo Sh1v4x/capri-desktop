@@ -117,12 +117,46 @@ namespace CapriDesktop
             return seat != null && pet.Hip.Y == seat.Y;
         }
 
+        // Her French layer swaps whole lines, templates and sentences only in French, and the Claude Code bridge is known by address.
+        private void SmokeFrenchAndBridge()
+        {
+            try
+            {
+                French.Forced = false;
+                if (French.T("Use Claude Code (your Claude plan)") != "Use Claude Code (your Claude plan)") throw new Exception("English lines changed outside French.");
+                French.Forced = true;
+                if (French.Count < 10) throw new Exception("Her French dictionaries didn't load: " + French.Count + " lines.");
+                if (French.T("Use Claude Code (your Claude plan)") != "Utiliser Claude Code (ton abonnement Claude)") throw new Exception("A whole French line was not swapped.");
+                if (French.T("Couldn't start the Claude Code bridge: port busy") != "Impossible de démarrer le pont Claude Code : port busy") throw new Exception("A French template did not keep its filled-in part.");
+                if (French.T("Capri is closing. Something new.") != "Capri est en train de se fermer. Something new.") throw new Exception("A known sentence inside a longer line was not swapped.");
+                if (French.T("Rien à traduire ici.") != "Rien à traduire ici.") throw new Exception("French text was changed.");
+                var menu = new ContextMenu();
+                var item = new MenuItem { Header = "Use Claude Code (your Claude plan)" };
+                menu.Items.Add(item);
+                French.Menu(menu);
+                if (item.Header as string != "Utiliser Claude Code (ton abonnement Claude)") throw new Exception("A menu header stayed English in French.");
+                if (Pill.Wide <= Pill.Base || Pill.TextSize <= 8.5) throw new Exception("Her talk pill didn't grow for French labels.");
+                string cramped = PillFace.CheckLabels(Path.Combine(Program.Smoke, "pill-fr.png"));
+                if (cramped != null) throw new Exception("Her French talk pill: " + cramped);
+                French.Forced = false;
+                French.Menu(menu);
+                if (item.Header as string != "Use Claude Code (your Claude plan)") throw new Exception("A menu header stayed French after switching back to English.");
+                if (Pill.Wide != Pill.Base) throw new Exception("Her talk pill didn't go back to its English width.");
+            }
+            finally { French.Forced = null; }
+            if (!ClaudeBridge.Is("http://localhost:4747") || !ClaudeBridge.Is("http://127.0.0.1:4747") || ClaudeBridge.Is("http://localhost:4748") || ClaudeBridge.Is("http://example.com:4747") || ClaudeBridge.Is(null))
+                throw new Exception("The Claude Code bridge address was not recognised exactly.");
+            if (!ClaudeBridge.Bundled) throw new Exception("The Claude Code bridge did not ship next to her.");
+            checks.Add("PASS French layer: whole lines, templates and sentences swap only in French, menus switch both ways; the Claude Code bridge ships with her and is known by its address");
+        }
+
         private bool Step(double now)
         {
             if (step == 0)
             {
                 foreach (Clip clip in pet.Clips) if (!clip.Even || clip.Strip.PixelSize.Height != 384) throw new Exception("A sprite strip doesn't split into even 384 px cells.");
                 checks.Add("PASS sprites: all " + pet.Clips.Count + " clips, standing and perched, load from the app and split into even cells");
+                SmokeFrenchAndBridge();
                 foreach (string clipName in new[] { "morning", "late", "miss" })
                 {
                     byte[] hello = Pet.Hello(clipName);
@@ -646,7 +680,7 @@ namespace CapriDesktop
                 bool cloudGone = pet.Brain.Remote == null && pet.Saved.CloudModel == null && !File.Exists(Path.Combine(folder, "brain-key"));
                 pet.Brain.Model = "qwen3:8b";
                 pet.Talk.Dismiss();
-                if (ollamaMenu != "*qwen3:8b | - | Download a model (Ollama or Hugging Face)... | Use my own server (OpenAI API)... | Use my own provider with a key (OpenAI API)... | - | Get a free NVIDIA key | " + Pet.KeyChoice) throw new Exception("The Brain menu didn't offer a cloud key: " + ollamaMenu);
+                if (ollamaMenu != "*qwen3:8b | - | Download a model (Ollama or Hugging Face)... | Use my own server (OpenAI API)... | Use my own provider with a key (OpenAI API)... | " + (ClaudeBridge.Bundled ? "Use Claude Code (your Claude plan) | " : "") + "- | Get a free NVIDIA key | " + Pet.KeyChoice) throw new Exception("The Brain menu didn't offer a cloud key: " + ollamaMenu);
                 if (freeKey != Pet.FreeKeySteps || !keyAsked || notKey != Pet.NotAKey || !keyHidden) throw new Exception("The key choices didn't say where to paste, ask in a hidden box or explain a bad key: " + freeKey + " | " + keyAsked + " | " + notKey + " | " + keyHidden);
                 if (cloudMenu != "NVIDIA key ending 1234 (off) | *meta/llama-3.3-70b-instruct | qwen/qwen3-235b-a22b | - | Stay on my model | Forget the key and use Ollama" || !cloudPicked || !cloudGone || !cloudDetails || !hopped || !hopsEnd
                     || nvidiaMenu != "NVIDIA key ending 1234 (off) | *nvidia/nemotron-3.5-super-vl-120b-a12b · recommended | nvidia/nemotron-3.5-bolt-e4b | openai/gpt-oss-20b | - | *Stay on my model | Forget the key and use Ollama")

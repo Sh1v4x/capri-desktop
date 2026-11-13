@@ -103,6 +103,14 @@ She becomes Claude Code's and Codex's body while they work. Leave them coding an
 
 Code/Husk Mode works on Windows, Mac and Linux.
 
+## Claude Code as her brain
+
+No API key? If you have Claude Code and a Claude subscription, the [Claude Code bridge](claude-bridge/README.md) lets her think with it. On Mac and Linux, right-click her > Brain > **Use Claude Code (your Claude plan)**: she starts the bridge with her and stops it when she quits. On Windows, run `npm start` in `claude-bridge` and connect her brain to `http://localhost:4747`. Chat, screen sight and her tools all work, and Claude API keys still work the same as before.
+
+## Her menus and Mainframe in French
+
+On Mac and Linux, with her language set to Français, her menus, Mainframe, tips and fixed lines show in French too, not just her replies. The French lives in [`cross/lang/fr`](cross/lang/fr), one JSON file per area; `node cross/lang/check.mjs` checks them. A line that isn't translated yet stays in English.
+
 ## Mods
 
 Press **Mods** in the Mainframe's CAPRI band. Browse the [mods directory](https://github.com/lachydotmcg/capri-mods) with previews, downloads and ratings, install one with a click, import your own, and publish yours.

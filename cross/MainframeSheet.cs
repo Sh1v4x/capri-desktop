@@ -104,7 +104,7 @@ namespace CapriDesktop
                 {
                     if (!StorageProvider.CanOpen) { Say("Couldn't open the mod picker."); return; }
                     System.Collections.Generic.IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {
-                        Title = "Import mod", AllowMultiple = false,
+                        Title = French.T("Import mod"), AllowMultiple = false,
                         FileTypeFilter = new[] { new FilePickerFileType("Capri mods") { Patterns = new[] { "*.capri-mod", "*.capri-skin", "*.capri-code" } } } });
                     if (!closed && files.Count > 0)
                     {
@@ -248,7 +248,7 @@ namespace CapriDesktop
                 titles[i].Text = mod.Title;
                 authors[i].Text = mod.Author.Length > 0 ? "by " + mod.Author : "";
                 details[i].Text = mod.About;
-                ToolTip.SetTip(previews[i], new TextBlock { Text = mod.Title + (mod.Author.Length > 0 ? "\nby " + mod.Author : "") + (mod.About.Length > 0 ? "\n" + mod.About : ""), MaxWidth = 328, TextWrapping = TextWrapping.Wrap, FontFamily = MainframeTheme.Text, FontSize = MainframeTheme.Size, Foreground = MainframeTheme.White });
+                ToolTip.SetTip(previews[i], new TextBlock { Text = mod.Title + (mod.Author.Length > 0 ? "\n" + French.T("by") + " " + mod.Author : "") + (mod.About.Length > 0 ? "\n" + mod.About : ""), MaxWidth = 328, TextWrapping = TextWrapping.Wrap, FontFamily = MainframeTheme.Text, FontSize = MainframeTheme.Size, Foreground = MainframeTheme.White });
                 metas[i].Text = mod.KindIndex == 2 ? Mods.WindowsOnly : mod.Kind + (installed ? " Installed." : "");
                 numbers[i].Text = statsLive ? ModDirectory.DownloadLine(mod) + "  |  " + ModDirectory.RatingLine(mod) : loading ? "Loading counts and ratings..." : "Counts and ratings unavailable.";
                 downloads[i].Text = installed ? "Reinstall" : "Download";
@@ -579,7 +579,7 @@ namespace CapriDesktop
                 if (!Security.Has(i)) continue;
                 int at = i;
                 var toggle = Toggle(Security.Names[i], y, () => Security.On(at), on => Security.Set(at, on));
-                ToolTip.SetTip(toggle, Security.Lines[i]);
+                ToolTip.SetTip(toggle, French.T(Security.Lines[i]));
                 y += 34;
             }
             if (pet.MainframeInputSetup) { Button("Set up mouse and keyboard", 28, y + 8, 328, 28, pet.MainframeSetupInput); y += 44; }
@@ -618,7 +618,7 @@ namespace CapriDesktop
                     if (current == null && vaults.Count > 0) current = Path.Combine(vaults[0].Value, Pet.VaultNote);
                     var start = current != null && Directory.Exists(Path.GetDirectoryName(current)) ? await StorageProvider.TryGetFolderFromPathAsync(Path.GetDirectoryName(current)) : null;
                     var picked = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
-                        Title = "Pick the note her memories go in", SuggestedFileName = current == null ? Pet.VaultNote : Path.GetFileName(current),
+                        Title = French.T("Pick the note her memories go in"), SuggestedFileName = current == null ? Pet.VaultNote : Path.GetFileName(current),
                         SuggestedStartLocation = start, DefaultExtension = "md", ShowOverwritePrompt = false,
                         FileTypeChoices = new[] { new FilePickerFileType("Notes") { Patterns = new[] { "*.md" } } } });
                     string path = picked?.TryGetLocalPath();

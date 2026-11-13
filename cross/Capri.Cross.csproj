@@ -41,4 +41,13 @@
     <AvaloniaResource Include="../assets/fonts/Barlow*.ttf" Link="Assets/%(Filename)%(Extension)" />
     <EmbeddedResource Include="../assets/fonts/Barlow-OFL.txt" LogicalName="Capri.Font.Barlow-OFL.txt" />
   </ItemGroup>
+  <!-- Her French words (French.cs). -->
+  <ItemGroup>
+    <EmbeddedResource Include="lang/fr/*.json" LogicalName="Capri.Lang.fr.%(Filename).json" />
+  </ItemGroup>
+  <!-- Her Claude Code brain (ClaudeBridge.cs) runs this bridge, so it ships next to her. -->
+  <ItemGroup>
+    <None Include="../claude-bridge/server.mjs" Link="claude-bridge/server.mjs" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../claude-bridge/src/*.mjs" Link="claude-bridge/src/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

@@ -317,7 +317,7 @@ namespace CapriDesktop
             huskMode.Height = 22;
             huskMode.Options(Pet.HuskNames);
             readers.Add(delegate { huskMode.IsEnabled = !pet.HuskChanging; });
-            ToolTip.SetTip(huskMode, "Watch Claude Code or Codex through her hooks. Restart the coding app after changing this.");
+            ToolTip.SetTip(huskMode, French.T("Watch Claude Code or Codex through her hooks. Restart the coding app after changing this."));
             Toggle("Stay on my model", 380, 466, () => pet.Saved.StayOnModel, pet.SetStay);
             Slider("Replies", Lengths, 380, 494, () => Brain.Wordiness, pet.SetReplies);
             Slider("Memory", Lengths, 380, 522, () => Array.IndexOf(Recalls, Brain.Recall), i => pet.SetRecall(Recalls[i]));

@@ -126,7 +126,7 @@ namespace CapriDesktop
             else if (name == "Speech model") name = "Default model";
             string text;
             if (!Text.TryGetValue(name, out text)) return;
-            text = Brief(text);
+            text = French.Tip(name) ?? Brief(text);
             ToolTip.SetTip(control, new TextBlock { Text = text, MaxWidth = 332, TextWrapping = Avalonia.Media.TextWrapping.Wrap, FontFamily = MainframeTheme.Text, FontSize = MainframeTheme.Size, Foreground = MainframeTheme.White });
             ToolTip.SetShowDelay(control, 400);
         }

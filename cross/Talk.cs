@@ -178,7 +178,7 @@ namespace CapriDesktop
             ShowActivated = true;
             Width = Math.Ceiling(Sheet.PanelWidth());
             Height = Tall;
-            prompt = new TextBlock { Text = "> you:", FontFamily = Look.Mono, FontStyle = FontStyle.Italic, FontSize = Sheet.Type, Foreground = new SolidColorBrush(Look.Dim), VerticalAlignment = VerticalAlignment.Center };
+            prompt = new TextBlock { Text = French.T("> you:"), FontFamily = Look.Mono, FontStyle = FontStyle.Italic, FontSize = Sheet.Type, Foreground = new SolidColorBrush(Look.Dim), VerticalAlignment = VerticalAlignment.Center };
             input.FontFamily = Look.Mono;
             input.FontSize = Sheet.Type;
             // No limit, so her brain reads a long request whole.
@@ -221,7 +221,7 @@ namespace CapriDesktop
             {
                 input.PasswordChar = value ? '\u2022' : '\0';
                 input.MaxLength = value ? 200 : 0;
-                prompt.Text = value ? "> key:" : "> you:";
+                prompt.Text = French.T(value ? "> key:" : "> you:");
                 if (value) input.Text = "";
             }
         }
@@ -351,7 +351,7 @@ namespace CapriDesktop
             return new Rect(meter.Left + bar * Pitch(s), meter.Bottom - square - row * Pitch(s), square, square);
         }
 
-        private static FormattedText Words(string label, double s, Color colour) { return Look.Text(label, Look.Regular, 8.5 * s, colour); }
+        private static FormattedText Words(string label, double s, Color colour) { return Look.Text(French.T(label), Look.Regular, Pill.TextSize * s, colour); }
 
         // Where a label's letters land, from where it's drawn, in whole pixels.
         private static Rect Ink(FormattedText text)
@@ -656,6 +656,25 @@ namespace CapriDesktop
             return null;
         }
 
+        // In French its labels are bigger and longer: each one must sit inside its own half, clear of the seam and the edge.
+        // Null when they fit, or what's wrong. It saves the states as a picture too.
+        internal static string CheckLabels(string picture)
+        {
+            if (picture != null) Sheet(picture);
+            foreach (double s in new[] { 1.0, 1.5, 2.0 })
+            {
+                Rect body = Body(s);
+                double mid = Math.Floor(Measure(s).Width / 2);
+                foreach (string talk in new[] { "TALK", "MUTED" })
+                {
+                    Rect[] pencil = Layout(s, 1, "TYPE"), wave = Layout(s, 2, talk);
+                    if (pencil[0].Left < body.Left + 4 * s || pencil[1].Right > mid - 4 * s) return French.T("TYPE") + " doesn't fit its half at " + s;
+                    if (wave[0].Left < mid + 4 * s || wave[1].Right > body.Right - 4 * s) return French.T(talk) + " doesn't fit its half at " + s;
+                }
+            }
+            return null;
+        }
+
         // The states side by side at 100% and 200%, on a dark and a light desktop, like Windows' pill.png.
         private static void Sheet(string path)
         {
@@ -708,8 +727,32 @@ namespace CapriDesktop
 
     internal sealed class Pill : Window
     {
-        internal const double Wide = 100;
+        // 100 wide in English, like Windows. Longer labels, like French, widen it so they're never cramped, and they're drawn a
+        // little bigger there, to read easily.
+        internal const double Base = 100;
         internal const double Tall = 40;
+        internal static double TextSize { get { return French.On ? 10.5 : 8.5; } }
+        private static double sizedFor = -1;
+        private static double wide = Base;
+        internal static double Wide
+        {
+            get
+            {
+                bool french = French.On;
+                if (!french) return Base;
+                double size = TextSize;
+                double key = size + (french ? 1000 : 0);
+                if (key == sizedFor) return wide;
+                double label = 0;
+                foreach (string name in new[] { "TYPE", "TALK", "MUTED" })
+                    label = Math.Max(label, Look.Text(French.T(name), Look.Regular, size, Look.Ink).Width);
+                // Each half: the plate's margin and edge, padding, the icon, a gap, the label, padding.
+                double half = 3 + 1.5 + 7 + 14 + 4 + Math.Ceiling(label) + 7;
+                wide = Math.Max(Base, 2 * Math.Ceiling(half));
+                sizedFor = key;
+                return wide;
+            }
+        }
         internal event Action Typing;
         internal event Action Voice;
         private static readonly Random random = new Random();
@@ -752,7 +795,9 @@ namespace CapriDesktop
         // Only showing it glitches: a hover or her walking draws it clean.
         internal void Place(PixelPoint topCentre, double scale, double now)
         {
-            PixelPoint at = new PixelPoint(topCentre.X - (int)Math.Round(Wide * scale / 2), topCentre.Y);
+            double across = Wide;
+            if (Width != across) { Width = across; face.InvalidateVisual(); }
+            PixelPoint at = new PixelPoint(topCentre.X - (int)Math.Round(across * scale / 2), topCentre.Y);
             if (Position != at) Position = at;
             if (!IsVisible)
             {
@@ -893,6 +938,7 @@ namespace CapriDesktop
         // sight: it would float there with nobody under it, and stop her pop-ins until she's shown.
         internal void Answer(string heard, string answer, double seconds = 0)
         {
+            answer = French.T(answer);
             pet.Answered();
             if (pet.Away) return;
             reply = answer;

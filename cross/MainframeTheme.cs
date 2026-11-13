@@ -85,7 +85,7 @@ namespace CapriDesktop
         internal static IBrush Brush(string value) { return new SolidColorBrush(Tint(value)); }
         internal static FormattedText Words(string text, double size = Size, bool bold = false, IBrush ink = null, bool display = false)
         {
-            return new FormattedText(text ?? "", CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+            return new FormattedText(French.T(text) ?? "", CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
                 new Typeface(display ? Display : Text, FontStyle.Normal, bold ? FontWeight.SemiBold : FontWeight.Normal), size, ink ?? White);
         }
 
@@ -101,7 +101,7 @@ namespace CapriDesktop
         }
         internal static string Fitted(string text, double width, double size = Size, bool bold = false, bool display = false)
         {
-            text = text ?? "";
+            text = French.T(text) ?? "";
             if (Words(text, size, bold, display: display).Width <= width) return text;
             while (text.Length > 0 && Words(text + "…", size, bold, display: display).Width > width) text = text.Substring(0, text.Length - 1);
             return text + "…";
@@ -141,7 +141,7 @@ namespace CapriDesktop
 
         internal static TextBox Input(string hint, bool secret = false)
         {
-            var input = new TextBox { Watermark = hint, FontFamily = Text, FontSize = Size, MinHeight = 0, MinWidth = 0,
+            var input = new TextBox { Watermark = French.T(hint), FontFamily = Text, FontSize = Size, MinHeight = 0, MinWidth = 0,
                 Padding = new Thickness(0), Background = Brushes.Transparent, Foreground = White, BorderThickness = new Thickness(0),
                 CaretBrush = Cyan, SelectionBrush = DeepEdge, SelectionForegroundBrush = White, PasswordChar = secret ? '\u2022' : '\0',
                 VerticalContentAlignment = VerticalAlignment.Center };
@@ -508,7 +508,7 @@ namespace CapriDesktop
         internal readonly TextBox Box;
         internal bool Chevron;
         internal event Action Drop;
-        internal string Cue { get { return Box.Watermark as string; } set { Box.Watermark = value; } }
+        internal string Cue { get { return Box.Watermark as string; } set { Box.Watermark = French.T(value); } }
         internal NeonEntry(string cue, bool secret = false)
         {
             Box = MainframeTheme.Input(cue, secret); Child = Box; Padding = new Thickness(10, 1);

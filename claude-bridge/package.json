@@ -1,0 +1,13 @@
+{
+  "name": "capri-claude-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local OpenAI-compatible server that lets Capri think with Claude Code (your Claude subscription) instead of an API key.",
+  "type": "module",
+  "bin": { "capri-claude-bridge": "server.mjs" },
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}

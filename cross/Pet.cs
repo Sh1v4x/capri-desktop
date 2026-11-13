@@ -554,6 +554,12 @@ namespace CapriDesktop
                 Brain.Remote = new Cloud(brainKey, Saved.CloudModel);
                 Brain.Model = Saved.CloudModel;
             }
+            // In this fork, a first start thinks with Claude Code when it ships with her: no key or download to set up.
+            if (fresh && string.IsNullOrEmpty(Saved.BrainServer) && Brain.Remote == null && ClaudeBridge.Bundled)
+            {
+                Saved.BrainServer = ClaudeBridge.Address;
+                Saved.ServerModel = "claude-sonnet";
+            }
             string savedServer = Brain.ServerAddress(Saved.BrainServer);
             string savedServerKey = null;
             string pairServer, pairKey;
@@ -564,6 +570,11 @@ namespace CapriDesktop
             }
             WriteSecret(ServerKeyFile, null, "provider key");
             Brain.SetServer(savedServer, savedServerKey != null && Brain.ServerKeySafe(savedServer) ? savedServerKey : null);
+            // Her Claude Code brain wakes with her and goes when she does.
+            ClaudeBridge.LogPath = Path.Combine(Program.Smoke ?? folder, "claude-bridge.log");
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => ClaudeBridge.Shutdown();
+            desktop.Exit += (_, _) => ClaudeBridge.Shutdown();
+            if (Program.Smoke == null && ClaudeBridge.Is(savedServer)) ThreadPool.QueueUserWorkItem(delegate { ClaudeBridge.Ensure(); });
             if (Brain.Remote == null && savedServer != null && !string.IsNullOrEmpty(Saved.ServerModel)) Brain.Model = Saved.ServerModel;
             RestoreBrainTier();
             voice.Key = ReadVoiceKey();
@@ -1871,7 +1882,7 @@ namespace CapriDesktop
             {
                 int preset = i;
                 MenuItem pick = new MenuItem { Header = Security.Presets[i], ToggleType = MenuItemToggleType.Radio, GroupName = "security", IsEnabled = i != Security.Custom };
-                ToolTip.SetTip(pick, Security.PresetLine(i));
+                ToolTip.SetTip(pick, French.T(Security.PresetLine(i)));
                 pick.Click += Guarded(delegate { if (preset != Security.Custom) Security.Pick(preset); });
                 securityPicks.Add(pick);
                 securityMenu.Items.Add(pick);
@@ -1882,8 +1893,8 @@ namespace CapriDesktop
                 if (!Security.Has(i)) continue;
                 int toggle = i;
                 StackPanel face = new StackPanel();
-                face.Children.Add(new TextBlock { Text = Security.Names[i] });
-                face.Children.Add(new TextBlock { Text = Security.Lines[i], FontSize = 11, Foreground = new SolidColorBrush(Look.Dim) });
+                face.Children.Add(new TextBlock { Text = French.T(Security.Names[i]) });
+                face.Children.Add(new TextBlock { Text = French.T(Security.Lines[i]), FontSize = 11, Foreground = new SolidColorBrush(Look.Dim) });
                 MenuItem item = new MenuItem { Header = face, ToggleType = MenuItemToggleType.CheckBox, Tag = i };
                 item.Click += Guarded(delegate { Security.Set(toggle, !Security.On(toggle)); });
                 securityToggles.Add(item);
@@ -1893,7 +1904,7 @@ namespace CapriDesktop
             {
                 securityMenu.Items.Add(new Separator());
                 MenuItem setup = new MenuItem { Header = "Set up mouse and keyboard..." };
-                ToolTip.SetTip(setup, "Copies the one command that lets her make her own mouse and keyboard through /dev/uinput.");
+                ToolTip.SetTip(setup, French.T("Copies the one command that lets her make her own mouse and keyboard through /dev/uinput."));
                 setup.Click += Guarded(delegate { CopyFingersSetup(); });
                 securityMenu.Items.Add(setup);
             }
@@ -1948,7 +1959,7 @@ namespace CapriDesktop
             menu.Items.Add(update);
             menu.Items.Add(new Separator());
             menu.Items.Add(quit);
-            menu.Opening += delegate { Sync(); hideItem.Header = Away ? "Show Capri" : "Hide Capri"; };
+            menu.Opening += delegate { Sync(); hideItem.Header = Away ? "Show Capri" : "Hide Capri"; French.Menu(menu); };
             return menu;
         }
 
@@ -2842,6 +2853,7 @@ namespace CapriDesktop
                 string[] found = null;
                 if (server != null)
                 {
+                    if (Program.Smoke == null && ClaudeBridge.Is(server)) ClaudeBridge.Ensure();
                     try { found = Brain.ServerModels(server, serverKey); }
                     catch (Exception) { }
                     Dispatcher.UIThread.Post(delegate
@@ -2893,6 +2905,12 @@ namespace CapriDesktop
             MenuItem provider = new MenuItem { Header = "Use my own provider with a key (OpenAI API)..." };
             provider.Click += Guarded(delegate { AskProvider(); });
             brainMenu.Items.Add(provider);
+            if (ClaudeBridge.Bundled)
+            {
+                MenuItem claudeCode = new MenuItem { Header = "Use Claude Code (your Claude plan)" };
+                claudeCode.Click += Guarded(delegate { UseServer(ClaudeBridge.Address); });
+                brainMenu.Items.Add(claudeCode);
+            }
             // A cloud key thinks for her instead, for PCs that can't run Ollama's models well. NVIDIA's is free.
             brainMenu.Items.Add(new Separator());
             MenuItem free = new MenuItem { Header = "Get a free NVIDIA key" };
@@ -2916,7 +2934,7 @@ namespace CapriDesktop
             if (Brain.Remote != null || server == null) return;
             frameProblem = found == null ? "Can't reach your server. Is it running?" : null;
             brainMenu.Items.Clear();
-            brainMenu.Items.Add(new MenuItem { Header = "My server at " + server + (serverKey == null ? "" : " (with a key)"), IsEnabled = false });
+            brainMenu.Items.Add(new MenuItem { Header = ClaudeBridge.Is(server) ? ClaudeBridge.Name : "My server at " + server + (serverKey == null ? "" : " (with a key)"), IsEnabled = false });
             if (found == null) brainMenu.Items.Add(new MenuItem { Header = "Can't reach it. Is it running?", IsEnabled = false });
             else if (found.Length == 0) brainMenu.Items.Add(new MenuItem { Header = "It lists no models", IsEnabled = false });
             else
@@ -3020,6 +3038,7 @@ namespace CapriDesktop
             ThreadPool.QueueUserWorkItem(delegate
             {
                 string[] found = null;
+                string bridgeProblem = Program.Smoke == null && ClaudeBridge.Is(server) ? ClaudeBridge.Ensure() : null;
                 try { found = Brain.ServerModels(server, key); }
                 catch (Exception) { }
                 Dispatcher.UIThread.Post(delegate
@@ -3027,7 +3046,7 @@ namespace CapriDesktop
                     if (ticket != asking) return;
                     if (found == null || found.Length == 0)
                     {
-                        if (ticket == asking) Talk.Answer("(brain server)", found == null ? (key == null ? "Can't reach a server at " + server + ". Is it running?" : "Can't reach " + server + " with that key. Check the address and the key.") : "Your server at " + server + " lists no models. Load one in it first.");
+                        if (ticket == asking) Talk.Answer("(brain server)", found == null && bridgeProblem != null ? bridgeProblem : found == null ? (key == null ? "Can't reach a server at " + server + ". Is it running?" : "Can't reach " + server + " with that key. Check the address and the key.") : "Your server at " + server + " lists no models. Load one in it first.");
                         return;
                     }
                     if (!WriteServerPair(ServerPairFile, server, key))
@@ -3037,6 +3056,7 @@ namespace CapriDesktop
                     }
                     Brain.Cancel();
                     Brain.SetServer(server, key);
+                    ClaudeBridge.Follow(server);
                     Saved.BrainServer = server;
                     WriteSecret(ServerKeyFile, null, "provider key");
                     string model = Array.IndexOf(found, Saved.ServerModel) >= 0 ? Saved.ServerModel : found[0];
@@ -3044,7 +3064,7 @@ namespace CapriDesktop
                     Saved.ServerModel = model;
                     Save();
                     if (MainframeTier == 0) ShowServer(found);
-                    if (ticket == asking) Talk.Answer("(brain server)", key == null ? "I'm thinking with " + model + " on your server now." + (Brain.Remote != null ? " Your cloud key still comes first until you forget it." : "") : "I'm thinking with " + model + " on " + server + " with your key now." + (Brain.Remote != null ? " Your cloud key still comes first until you forget it." : ""));
+                    if (ticket == asking) Talk.Answer("(brain server)", key == null ? "I'm thinking with " + model + (ClaudeBridge.Is(server) ? " through Claude Code, on your Claude plan, now. I start and stop it with me." : " on your server now.") + (Brain.Remote != null ? " Your cloud key still comes first until you forget it." : "") : "I'm thinking with " + model + " on " + server + " with your key now." + (Brain.Remote != null ? " Your cloud key still comes first until you forget it." : ""));
                 });
             });
         }
@@ -3068,6 +3088,7 @@ namespace CapriDesktop
             }
             Brain.Cancel();
             Brain.SetServer(null, null);
+            ClaudeBridge.Follow(null);
             Saved.BrainServer = null;
             frameModels = Array.Empty<string>();
             WriteSecret(ServerKeyFile, null, "provider key");
@@ -4019,6 +4040,7 @@ namespace CapriDesktop
 
         private void Reply(int ticket, string heard, string said, string after = null, bool following = false)
         {
+            said = French.T(said);
             int input = inputTurn, answer = answerTurn;
             followUp.Drop();
             if (!Speaks || Voice.Spoken(said).Length == 0) { if (ShowReply(ticket, heard, said, 0, after, following, input, answer)) TypeAlong(said, ticket); return; }
@@ -4663,6 +4685,7 @@ namespace CapriDesktop
                 StopAwake();
                 CloseMainframe();
                 Brain.Cancel();
+                ClaudeBridge.Shutdown();
                 voice.Stop();
                 if (presence != null) presence.Dispose();
                 Talk.Dismiss();
@@ -4681,6 +4704,7 @@ namespace CapriDesktop
         internal void Finish(int code)
         {
             if (husk != null) husk.Dispose();
+            ClaudeBridge.Shutdown();
             StopAwake();
             CloseMainframe();
             frames.Stop();

@@ -1,0 +1,15 @@
+{
+  "lines": {
+    "Use Claude Code (your Claude plan)": "Utiliser Claude Code (ton abonnement Claude)",
+    "Claude Code (your Claude plan)": "Claude Code (ton abonnement Claude)",
+    "Capri is closing.": "Capri est en train de se fermer.",
+    "The Claude Code bridge isn't in this copy of Capri.": "Le pont Claude Code n'est pas inclus dans cette copie de Capri.",
+    "I need Node.js to use Claude Code. Install it from nodejs.org, then try again.": "J'ai besoin de Node.js pour utiliser Claude Code. Installe-le depuis nodejs.org, puis réessaie.",
+    "I can't find Claude Code. Install it, run claude once in a terminal to log in, then try again.": "Je ne trouve pas Claude Code. Installe-le, lance claude une fois dans un terminal pour te connecter, puis réessaie.",
+    "The Claude Code bridge stopped right after starting. Its log is {0}.": "Le pont Claude Code s'est arrêté juste après son démarrage. Son journal est ici : {0}.",
+    "The Claude Code bridge didn't answer in time. Is port {0} used by something else?": "Le pont Claude Code n'a pas répondu à temps. Le port {0} est peut-être déjà utilisé ?",
+    "Couldn't start the Claude Code bridge.": "Impossible de démarrer le pont Claude Code.",
+    "Couldn't start the Claude Code bridge: {0}": "Impossible de démarrer le pont Claude Code : {0}",
+    "I'm thinking with {0} through Claude Code, on your Claude plan, now. I start and stop it with me.": "Je réfléchis maintenant avec {0} via Claude Code, sur ton abonnement Claude. Je le démarre et je l'arrête avec moi."
+  }
+}
